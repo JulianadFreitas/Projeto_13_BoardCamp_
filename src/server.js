@@ -54,6 +54,11 @@ app.get("/games", async (req, res) => {
   try {
     const games = await connection.query("SELECT * FROM games");
     const data = games.rows;
+     //TENTATIVAS
+    // const categories = await connection.query('SELECT * FROM categories WHERE id= $1',[data.id]);
+    // const categoryName = categories.rows[0].name;
+    // const newdata = data.map((e)=> (e.categoryName = categoryName));
+
     if (parameter) {
       const num = parameter.length;
       const resultado = data.filter((e) => {
@@ -77,19 +82,20 @@ app.post("/games", async (req, res) => {
     const data = games.rows;
     const findGame = data.find((e) => e.name === name);
 
-    if (
-      name === "" ||
-      parseInt(stockTotal) === 0 ||
-      parseInt(pricePerDay) === 0
-    ) {
+    const categories = await connection.query('SELECT * FROM categories WHERE id= $1',[categoryId]);
+    const categoryName = categories.rows[0].name;
+
+    if ( name === "" || parseInt(stockTotal) === 0 || parseInt(pricePerDay) === 0) {
       return res.sendStatus(400);
     } else if (findGame) {
       return res.sendStatus(409);
     }
-    console.log(stockTotal);
-    console.log(findGame);
-    console.log(req.body);
-    console.log(data.includes(name));
+    console.log(categoryName);
+     console.log(categories.rows[0]);
+    // console.log(categoryName);
+    // console.log(findGame);
+    // console.log(req.body);
+    // console.log(data.includes(name));
     await connection.query(
       'INSERT INTO games (name, image, "stockTotal", "categoryId", "pricePerDay") VALUES ($1, $2, $3, $4, $5)',
       [name, image, stockTotal, categoryId, pricePerDay]
