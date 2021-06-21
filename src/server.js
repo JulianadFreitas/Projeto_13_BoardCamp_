@@ -307,24 +307,17 @@ app.post("/rentals/:id/return", async (req, res) => {
     ]);
     let delay;
     const initialDay = rental.rows[0].rentDate;
-    const lastday = new Date();
     const daysPassedSinceRental =
       Math.ceil(
         (new Date(today).getTime() - new Date(initialDay).getTime()) / 86400000
       ) - rental.rows[0].daysRented;
 
     if (daysPassedSinceRental <= 0) {
-      delay = null;
+      delay = 0;
     } else {
       delay = daysPassedSinceRental * game.rows[0].pricePerDay;
     }
-
-    const lateDays =
-      Math.ceil(
-        (new Date(today).getTime() - new Date(initialDay).getTime()) / 86400000
-      ) - rental.rows[0].daysRented;
-    const fee = lateDays > 0 ? lateDays * game.rows[0].pricePerDay : 0;
-
+    
     await connection.query(
       'UPDATE rentals SET "returnDate" = $1, "delayFee" = $2 WHERE id = $3',
       [today, delay, id]
