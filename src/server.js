@@ -55,7 +55,7 @@ app.get("/games", async (req, res) => {
     );
     if (parameter) {
       const num = parameter.length;
-      const resultado = data.filter((e) => {
+      const resultado = games.rows.filter((e) => {
         const split = e.name.slice(0, num);
         return split === parameter;
       });
