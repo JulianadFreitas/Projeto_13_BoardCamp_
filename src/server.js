@@ -308,9 +308,10 @@ app.post("/rentals/:id/return", async (req, res) => {
     let delay;
     const initialDay = rental.rows[0].rentDate;
     const lastday = new Date();
-    const daysPassedSinceRental = Math.round(
-      (new Date(today).getTime() - new Date(initialDay).getTime()) / 86400000
-    );
+    const daysPassedSinceRental =
+      Math.ceil(
+        (new Date(today).getTime() - new Date(initialDay).getTime()) / 86400000
+      ) - rental.rows[0].daysRented;
 
     if (daysPassedSinceRental <= 0) {
       delay = null;
@@ -318,13 +319,19 @@ app.post("/rentals/:id/return", async (req, res) => {
       delay = daysPassedSinceRental * game.rows[0].pricePerDay;
     }
 
-    const teste = await connection.query(
+    const lateDays =
+      Math.ceil(
+        (new Date(today).getTime() - new Date(initialDay).getTime()) / 86400000
+      ) - rental.rows[0].daysRented;
+    const fee = lateDays > 0 ? lateDays * game.rows[0].pricePerDay : 0;
+
+    await connection.query(
       'UPDATE rentals SET "returnDate" = $1, "delayFee" = $2 WHERE id = $3',
       [today, delay, id]
     );
     await connection.query(
       `UPDATE games SET "stockTotal" = "stockTotal" + 1 WHERE id = $1`,
-      [rent.rows[0].gameId]
+      [rental.rows[0].gameId]
     );
 
     res.sendStatus(200);
@@ -335,16 +342,16 @@ app.post("/rentals/:id/return", async (req, res) => {
 });
 
 app.delete("/rentals/:id", async (req, res) => {
-  const rentalId = req.params.id;
+  const id = req.params.id;
   try {
     const rentalExists = await connection.query(
       "SELECT * FROM rentals WHERE id = $1",
-      [rentalId]
+      [id]
     );
     if (!rentalExists.rows.length) return res.sendStatus(404);
     if (rentalExists.rows[0].returnDate) return res.sendStatus(400);
 
-    await connection.query("DELETE FROM rentals WHERE id = $1", [rentalId]);
+    await connection.query("DELETE FROM rentals WHERE id = $1", [id]);
     return res.sendStatus(200);
   } catch {
     return res.sendStatus(500);
